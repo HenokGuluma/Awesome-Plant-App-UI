@@ -1,72 +1,43 @@
 import 'dart:convert';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:pie_chart/pie_chart.dart' as pie;
 import 'package:provider/provider.dart';
-import 'package:fl_chart/fl_chart.dart' as flChart;
 import 'package:http/http.dart' as http;
 import 'package:syncfusion_flutter_charts/charts.dart';
 import 'package:intl/intl.dart';
-
-
 import '../main.dart';
 
 
 
-class InstaHomeScreen extends StatefulWidget {
+class HomeScreen extends StatefulWidget {
   @override
-  _InstaHomeScreenState createState() => _InstaHomeScreenState();
+  _HomeScreenState createState() => _HomeScreenState();
 }
 
 
-class _InstaHomeScreenState extends State<InstaHomeScreen> with SingleTickerProviderStateMixin{
+class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMixin{
 
   bool dropDownToggle = true;
-  Map<String, double> dataMap = {
-    "Abyssinia Bank": 11,
-    "Dashen Bank": 20,
-    "Commercial Bank of Ethiopia": 25,
-    "Berhan Bank": 9,
-    "Enat Bank": 12,
-    "Wegagen Bank": 23
-  };
   final List<ChartData> chartData = [
     ChartData('Abyssinia Bank', 2500, Colors.orange ),
     ChartData('Dashen Bank', 2000, Colors.pink),
-    ChartData('Commercial Bank of Ethiopia', 4000, Colors.deepPurple),
+    ChartData('Awash Bank', 4000, Colors.deepPurple),
     ChartData('Berhan Bank', 1000, Colors.lightBlue),
     ChartData('Enat Bank', 800, Colors.green),
     ChartData('Wegagen Bank', 1500, Colors.yellow)
   ];
-  List<String> logos = ['assets/dashen bank logo.jpg','assets/abyssinia bank logo.png', 'assets/enat bank logo.png',];
-  List<Color> colorList = [
-    Colors.orange,
-    Colors.pink,
-    Colors.deepPurple,
-    Colors.lightBlue,
-    Colors.green,
-    Colors.yellow,
+  List<String> logos = [
+    'assets/dashen bank logo.jpg',
+    'assets/abyssinia bank logo.png',
+    'assets/enat bank logo.png',
   ];
   List<dynamic> duePaymentData;
   List<dynamic> moneyCollectedData;
   bool dataLoaded = false;
-  Map<int, bool> bookmarkMap;
-  //ChartType _chartType = ChartType.ring;
-  bool _showCenterText = true;
-  double _ringStrokeWidth = 20;
-  double _chartLegendSpacing = 32;
-  bool _showLegendsInRow = false;
-  bool _showLegends = true;
-  bool _showChartValueBackground = true;
-  bool _showChartValues = true;
-  bool _showChartValuesInPercentage = true;
-  bool _showChartValuesOutside = true;
-  pie.PieChart chart;
-  flChart.PieChart chart2;
+  Map<String, bool> bookmarkMap = Map();
   String centerText = 'Bank Info';
-  TabController _tabController;
-  String url1 = 'https://610e396448beae001747ba80.mockapi.io/duePayments';
-  String url2 = 'https://610e396448beae001747ba80.mockapi.io/collectedPayments';
+  String duePaymentsUrl = 'https://610e396448beae001747ba80.mockapi.io/duePayments';
+  String collectedPaymentsUrl = 'https://610e396448beae001747ba80.mockapi.io/collectedPayments';
   int touchedIndex = -1;
   int explodeIndex = 0;
   double amountOwed= 0;
@@ -78,7 +49,6 @@ class _InstaHomeScreenState extends State<InstaHomeScreen> with SingleTickerProv
   @override
   void initState() {
     super.initState();
-    _tabController = new TabController(length: 2, vsync: this);
     getDuePaymentsData().then((value) {
       setState(() {
         duePaymentData = value;
@@ -100,42 +70,8 @@ class _InstaHomeScreenState extends State<InstaHomeScreen> with SingleTickerProv
 
   @override
   Widget build(BuildContext context) {
-    chart = pie.PieChart(
-      //key: ValueKey(key),
-      dataMap: dataMap,
-      animationDuration: Duration(milliseconds: 800),
-      chartLegendSpacing: _chartLegendSpacing,
-
-      chartRadius: MediaQuery.of(context).size.width / 2.5 > 400
-          ? 400
-          : MediaQuery.of(context).size.width / 2.5,
-      colorList: colorList,
-      initialAngleInDegree: 240,
-      chartType: pie.ChartType.ring,
-      centerText: centerText,
-      legendOptions: pie.LegendOptions(
-        showLegendsInRow: _showLegendsInRow,
-        legendPosition: pie.LegendPosition.left,
-        showLegends: false,
-        legendShape:  BoxShape.circle,
-        legendTextStyle: TextStyle(
-          fontWeight: FontWeight.bold,
-          fontSize: 12
-        ),
-      ),
-      centerTextStyle: TextStyle(backgroundColor: Colors.white, color: Colors.black),
-      chartValuesOptions: pie.ChartValuesOptions(
-        showChartValueBackground: false,
-        showChartValues: _showChartValues,
-        showChartValuesInPercentage: _showChartValuesInPercentage,
-        showChartValuesOutside: false,
-        chartValueStyle: TextStyle(color: Colors.black)
-      ),
-      ringStrokeWidth: _ringStrokeWidth,
-      emptyColor: Colors.grey,
-    );
-    final variables = Provider.of<UserVariables>(context, listen: false);
-    bookmarkMap = variables.bookmarkMap;
+    final stateManager = Provider.of<UserVariables>(context, listen: false);
+    bookmarkMap = stateManager.bookmarkMap;
     return Scaffold(
         backgroundColor: Colors.white,
         appBar: AppBar(
@@ -145,7 +81,6 @@ class _InstaHomeScreenState extends State<InstaHomeScreen> with SingleTickerProv
           title: Container(
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                //border: Border.all(color: Color(0xff652fee)),
                 image: DecorationImage(
                   image: Image.asset('assets/male_model.jpg').image,
                   fit: BoxFit.cover,
@@ -169,6 +104,7 @@ class _InstaHomeScreenState extends State<InstaHomeScreen> with SingleTickerProv
               height: MediaQuery.of(context).size.height-135,
               child: ListView(
                 children: [
+                  //Visibility Widget
                   dropDownToggle
                   ?PieChartWidget()
                   :Center(),
@@ -199,14 +135,14 @@ class _InstaHomeScreenState extends State<InstaHomeScreen> with SingleTickerProv
   }
 
   getDuePaymentsData() async {
-    var paymentData = await http.get(Uri.parse(url1));
+    var paymentData = await http.get(Uri.parse(duePaymentsUrl));
     duePaymentData = json.decode(paymentData.body);
     print('the data is: ');
     print(duePaymentData);
     return duePaymentData;
   }
   getMoneyCollectedData() async {
-    var collectedData = await http.get(Uri.parse(url2));
+    var collectedData = await http.get(Uri.parse(collectedPaymentsUrl));
     moneyCollectedData = json.decode(collectedData.body);
     print('the data is: ');
     print(moneyCollectedData);
@@ -280,7 +216,7 @@ class _InstaHomeScreenState extends State<InstaHomeScreen> with SingleTickerProv
       ),
     );
   }
-  void legend(ChartPointDetails args) {
+  void legendClicked(ChartPointDetails args) {
     print(args.pointIndex);
     setState(() {
       explodeIndex = args.pointIndex;
@@ -291,11 +227,10 @@ class _InstaHomeScreenState extends State<InstaHomeScreen> with SingleTickerProv
 
   PieChartConstructor(){
     return SfCircularChart(
-      centerX: '80',
-      //onLegendTapped: (LegendTapArgs args) => legend(args),
+      //centerX: '80',
       legend: Legend(
         isVisible: true, iconHeight: 10, iconWidth: 10, position: LegendPosition.left,
-        overflowMode: LegendItemOverflowMode.wrap, alignment: ChartAlignment.far, width: '0.5'
+        overflowMode: LegendItemOverflowMode.wrap, alignment: ChartAlignment.far, width: '20%'
       ),
 
         annotations: <CircularChartAnnotation>[
@@ -306,27 +241,15 @@ class _InstaHomeScreenState extends State<InstaHomeScreen> with SingleTickerProv
                 child: Column(
                   children: [
                     Text('ETB ${amountOwed}', style: TextStyle( color: Color(0xff222222), fontSize: 18)),
-                    Text(bankName, style: TextStyle( color: Color(0xff555555), fontSize: 14))
+                    Text(bankName, style: TextStyle( color: Color(0xff555555), fontSize: 14,), overflow: TextOverflow.ellipsis,)
                   ],
                 )
-                )
-              /*widget: Center(
-                child: Container(
-                    width: 200,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Text('ETB ${amountOwed}', style: TextStyle( color: Color(0xff222222), fontSize: 18)),
-                        Text(bankName, style: TextStyle( color: Color(0xff555555), fontSize: 14))
-                      ],
-                    )),
-              )*/
+                ),
           )
         ],
         series: <CircularSeries>[
       DoughnutSeries<ChartData, String>(
-        onPointTap: (ChartPointDetails args) => legend(args),
+        onPointTap: (ChartPointDetails args) => legendClicked(args),
         explodeIndex: explodeIndex,
           strokeColor: Colors.transparent,
           explodeOffset: '20%',
@@ -349,53 +272,17 @@ class _InstaHomeScreenState extends State<InstaHomeScreen> with SingleTickerProv
           ),
           enableSmartLabels: true,
           // Radius of doughnut
-          radius: '500%')
+          radius: '100%')
     ]);
   }
 
   PieChartWidget(){
     return Container(
       width: MediaQuery.of(context).size.width,
-      height: 220,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          /*Legends(),
-          chart*/
-          PieChartConstructor()
-        ],
-      ),
-      //child: chart
+      height: 250,
+      child:  PieChartConstructor()
     );
   }
-  /*Legends(){
-    return Container(
-      width: MediaQuery.of(context).size.width*0.3,
-      child: ListView.builder(
-        //shrinkWrap: true,
-          scrollDirection: Axis.vertical,
-          itemCount: colorList.length,
-          itemBuilder: ((context, index) => LegendWidget(index))),
-    );
-  }
-  LegendWidget(int index){
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          width: 10,
-          height: 10,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: chartData[index].color
-          ),
-        ),
-        Text(chartData[index].x, overflow: TextOverflow.fade,)
-      ],
-    );
-  }*/
   DuePaymentsContainer(){
     return Container(
         width: MediaQuery.of(context).size.width,
@@ -506,7 +393,7 @@ class _InstaHomeScreenState extends State<InstaHomeScreen> with SingleTickerProv
   MoneyCollectedWidget(){
     return Container(
       width: MediaQuery.of(context).size.width,
-      //height: 350,
+      height: 400,
       child: Column(
         children: [
           Container(
@@ -545,7 +432,7 @@ class _InstaHomeScreenState extends State<InstaHomeScreen> with SingleTickerProv
             height: 10,
           ),
           Container(
-            height: 500,
+            height: 350,
             child: CollectedWidget()
             /*TabBarView(
               children: <Widget>[
@@ -586,6 +473,7 @@ class _InstaHomeScreenState extends State<InstaHomeScreen> with SingleTickerProv
     );
   }
   GridWidget(int index){
+    final stateManager = Provider.of<UserVariables>(context, listen: false);
     return Padding(
       padding: EdgeInsets.all(5),
       child: Container(
@@ -612,10 +500,10 @@ class _InstaHomeScreenState extends State<InstaHomeScreen> with SingleTickerProv
                         fit: BoxFit.cover,
                       ),
                     ),
-                    width: 50,
-                    height: 50,
+                    width: MediaQuery.of(context).size.width*0.12,
+                    height: MediaQuery.of(context).size.width*0.12,
                   ),
-                  SizedBox(width: 5,),
+                  SizedBox(width: MediaQuery.of(context).size.width*0.01,),
                   Column(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -678,14 +566,16 @@ class _InstaHomeScreenState extends State<InstaHomeScreen> with SingleTickerProv
                       SizedBox(height: 20,),
                       IconButton(
                           onPressed: (){
-                            if(bookmarkMap[index]){
+                            if(bookmarkMap.containsKey(moneyCollectedData[index]['title'])){
                               setState(() {
-                                bookmarkMap[index] = false;
+                                bookmarkMap.remove(moneyCollectedData[index]['title']);
+                                stateManager.removeBookmark(moneyCollectedData[index]['title']);
                               });
                             }
                             else{
                               setState(() {
-                                bookmarkMap[index] = true;
+                                bookmarkMap[moneyCollectedData[index]['title']] = true;
+                                stateManager.bookmark(moneyCollectedData[index]['title']);
                               });
                               final snackBar = SnackBar(
                                 content: Text('Bookmarked ${moneyCollectedData[index]['amount']} payment.'),
@@ -693,7 +583,7 @@ class _InstaHomeScreenState extends State<InstaHomeScreen> with SingleTickerProv
                               ScaffoldMessenger.of(context).showSnackBar(snackBar);
                             }
                           },
-                          icon: bookmarkMap[index]
+                          icon: bookmarkMap.containsKey(moneyCollectedData[index]['title'])
                         ?Icon(Icons.bookmark, size: 25, color: Colors.black,)
                       :Icon(Icons.bookmark_border, size: 25, color: Colors.grey,))
                     ],
