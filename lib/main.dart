@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:yogamates/ui/home_screen.dart';
+import 'package:equb/ui/home_screen.dart';
 import 'package:provider/provider.dart';
 
 
@@ -35,12 +35,15 @@ class MyAppState extends State<MyApp> {
         ));
   }
   Widget homeWidget(){
-    return InstaHomeScreen();
+    return HomeScreen();
   }
 }
 class UserVariables extends ChangeNotifier {
-  Map<int, bool> bookmarkMap = { 0: false, 1: false, 2: false, 3: false, 4: false, 5: false, 6: false,  7: false,  8: false,  9: false, 10: false, 11: false};
-  void bookmark(int index) {
-   bookmarkMap[index] = true;
+  Map<String, bool> bookmarkMap = Map();
+  void bookmark(String key) {
+    bookmarkMap[key] = true;
+  }
+  void removeBookmark(String key){
+    bookmarkMap.remove(key);
   }
 }
